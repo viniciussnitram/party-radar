@@ -1,9 +1,11 @@
-import { findObjects } from '../lib/json.ts';
+import { fetchHtml, type FetchHtmlResult } from '../lib/http.ts';
+import { findObjects, parseJson } from '../lib/json.ts';
 import { parseNextFlightData } from '../lib/next-flight.ts';
-import { normalize, slugify } from '../lib/text.ts';
-import type { City, CollectedEvent } from '../types.ts';
+import { decodeHtmlText, normalize, slugify } from '../lib/text.ts';
+import type { City, CollectedEvent, EventDetails } from '../types.ts';
 
-const BASE_URL = 'https://www.sympla.com.br/eventos';
+const BASE_URL = 'https://www.sympla.com.br';
+const NEXT_DATA_SCRIPT = /<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/s;
 
 // Shapes of an event inside Sympla's city page payload (only the fields we use).
 
@@ -37,38 +39,43 @@ type SymplaEvent = {
   location: SymplaLocation;
 };
 
-export type FetchPageSuccess = {
+// Shape of the event inside an event page's __NEXT_DATA__ (only the fields we use).
+
+type SymplaEventCategory = {
+  /** e.g. "musica", "festas-e-shows". */
+  slug?: string;
+};
+
+type SymplaEventPage = {
+  eventsCategory?: SymplaEventCategory | null;
+  /** Description as plain text. */
+  strippedDetail?: string | null;
+};
+
+export type CityPageSuccess = {
   ok: true;
   city: City;
   html: string;
 };
 
-export type FetchPageFailure = {
+export type CityPageFailure = {
   ok: false;
   city: City;
   /** Why the page couldn't be fetched, e.g. "HTTP 429 for <url>". */
   reason: string;
 };
 
-export type FetchPageResult = FetchPageSuccess | FetchPageFailure;
+export type CityPageResult = CityPageSuccess | CityPageFailure;
 
 export function cityPageUrl(city: City): string {
-  return `${BASE_URL}/${slugify(city.name, city.state)}`;
+  return `${BASE_URL}/eventos/${slugify(city.name, city.state)}`;
 }
 
-/**
- * Fetches one city page. A rate-limited or failed request is reported as a
- * failed result instead of thrown, so one blocked city doesn't stop the run.
- */
-export async function fetchCityPage(city: City, userAgent: string): Promise<FetchPageResult> {
-  const url = cityPageUrl(city);
-  const response = await fetch(url, { headers: { 'user-agent': userAgent } }).catch(
-    (error: Error) => error,
-  );
-
-  if (response instanceof Error) return { ok: false, city, reason: `${response.message} for ${url}` };
-  if (!response.ok) return { ok: false, city, reason: `HTTP ${response.status} for ${url}` };
-  return { ok: true, city, html: await response.text() };
+export async function fetchCityPage(city: City, userAgent: string): Promise<CityPageResult> {
+  const page = await fetchHtml(cityPageUrl(city), userAgent);
+  return page.ok
+    ? { ok: true, city, html: page.html }
+    : { ok: false, city, reason: `${page.reason} for ${page.url}` };
 }
 
 /** Extracts every event embedded in a Sympla city page, whatever its city. */
@@ -82,6 +89,31 @@ export function parseCityPage(html: string): CollectedEvent[] {
 export function inCities(events: CollectedEvent[], cities: City[]): CollectedEvent[] {
   const trackedCities = new Set(cities.map((city) => cityKey(city.name, city.state)));
   return events.filter((event) => trackedCities.has(cityKey(event.city, event.state)));
+}
+
+/**
+ * Only www.sympla.com.br event pages carry their data in the HTML. Pages on
+ * bileto.sympla.com.br (mostly theater) are rendered by JavaScript, so there
+ * is nothing to fetch for them.
+ */
+export function hasEventPage(event: CollectedEvent): boolean {
+  return event.url.startsWith(`${BASE_URL}/evento/`);
+}
+
+export function fetchEventPage(event: CollectedEvent, userAgent: string): Promise<FetchHtmlResult> {
+  return fetchHtml(event.url, userAgent);
+}
+
+/** Reads the category and description from an event page. */
+export function parseEventPage(html: string): EventDetails | null {
+  const nextData = NEXT_DATA_SCRIPT.exec(html)?.[1];
+  const [eventPage] = nextData ? findObjects(parseJson(nextData), isSymplaEventPage) : [];
+  if (!eventPage) return null;
+
+  return {
+    category: eventPage.eventsCategory?.slug?.trim() || null,
+    description: decodeHtmlText(eventPage.strippedDetail ?? '') || null,
+  };
 }
 
 /** "Macaé", "rj" -> "macae|rj", so accents and case don't affect matching. */
@@ -103,6 +135,10 @@ function isSymplaEvent(candidate: object): candidate is SymplaEvent {
     typeof candidate.location === 'object' &&
     candidate.location !== null
   );
+}
+
+function isSymplaEventPage(candidate: object): candidate is SymplaEventPage {
+  return 'eventsCategory' in candidate && 'strippedDetail' in candidate;
 }
 
 function toCollectedEvent(event: SymplaEvent): CollectedEvent {

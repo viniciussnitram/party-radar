@@ -18,7 +18,7 @@ Supabase (Postgres + Storage) ◄── web (React, Vercel)
                                      └─ admin area (Google / Microsoft login)
 ```
 
-- **collector**: a TypeScript job that reads public event listings for each configured city, normalizes them, merges duplicates and stores them.
+- **collector**: a TypeScript job that reads public event listings for each configured city, reads each event's page for its category and description, keeps parties and shows, and detects open bar and university parties. Duplicate merging and storage come next.
 - **web**: a React app that lists upcoming parties, with filters by city, open bar and weekend, plus an admin area to add, fix or remove parties and to manage cities.
 - **supabase**: database schema and migrations.
 
@@ -48,7 +48,7 @@ npm test
 ## Roadmap
 
 - [x] Sympla city page collector
-- [ ] Party filter (drop courses, theater, talks) and open bar / category detection
+- [x] Party filter (drop courses, theater, talks) and open bar / category detection
 - [ ] Supabase schema, persistence and duplicate merging
 - [ ] Uticket collector
 - [ ] Scheduled runs on GitHub Actions
