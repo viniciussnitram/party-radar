@@ -84,6 +84,6 @@ describe('sympla', () => {
   it('keeps only events in tracked cities, ignoring accents and case', () => {
     const events = parseCityPage(page(party, elsewhere));
     const kept = inCities(events, [{ name: 'RIO DAS OSTRAS', state: 'rj' }]);
-    assert.deepEqual(kept.map((e) => e.sourceId), ['3598094']);
+    assert.deepEqual(kept.map((event) => event.sourceId), ['3598094']);
   });
 });

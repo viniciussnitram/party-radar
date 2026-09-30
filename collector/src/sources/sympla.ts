@@ -37,7 +37,20 @@ type SymplaEvent = {
   location: SymplaLocation;
 };
 
-export type FetchPageResult = { ok: true; html: string } | { ok: false; reason: string };
+export type FetchPageSuccess = {
+  ok: true;
+  city: City;
+  html: string;
+};
+
+export type FetchPageFailure = {
+  ok: false;
+  city: City;
+  /** Why the page couldn't be fetched, e.g. "HTTP 429 for <url>". */
+  reason: string;
+};
+
+export type FetchPageResult = FetchPageSuccess | FetchPageFailure;
 
 export function cityPageUrl(city: City): string {
   return `${BASE_URL}/${slugify(city.name, city.state)}`;
@@ -53,9 +66,9 @@ export async function fetchCityPage(city: City, userAgent: string): Promise<Fetc
     (error: Error) => error,
   );
 
-  if (response instanceof Error) return { ok: false, reason: `${response.message} for ${url}` };
-  if (!response.ok) return { ok: false, reason: `HTTP ${response.status} for ${url}` };
-  return { ok: true, html: await response.text() };
+  if (response instanceof Error) return { ok: false, city, reason: `${response.message} for ${url}` };
+  if (!response.ok) return { ok: false, city, reason: `HTTP ${response.status} for ${url}` };
+  return { ok: true, city, html: await response.text() };
 }
 
 /** Extracts every event embedded in a Sympla city page, whatever its city. */
@@ -67,39 +80,48 @@ export function parseCityPage(html: string): CollectedEvent[] {
 
 /** Keeps only events that take place in one of the given cities. */
 export function inCities(events: CollectedEvent[], cities: City[]): CollectedEvent[] {
-  const wanted = new Set(cities.map((c) => `${normalize(c.name)}|${normalize(c.state)}`));
-  return events.filter((e) => wanted.has(`${normalize(e.city)}|${normalize(e.state)}`));
+  const trackedCities = new Set(cities.map((city) => cityKey(city.name, city.state)));
+  return events.filter((event) => trackedCities.has(cityKey(event.city, event.state)));
 }
 
-function isSymplaEvent(value: object): value is SymplaEvent {
-  const v = value as Partial<SymplaEvent>;
+/** "Macaé", "rj" -> "macae|rj", so accents and case don't affect matching. */
+function cityKey(name: string, state: string): string {
+  return `${normalize(name)}|${normalize(state)}`;
+}
+
+function isSymplaEvent(candidate: object): candidate is SymplaEvent {
   return (
-    typeof v.id === 'number' &&
-    typeof v.name === 'string' &&
-    typeof v.start_date === 'string' &&
-    typeof v.url === 'string' &&
-    typeof v.location === 'object' &&
-    v.location !== null
+    'id' in candidate &&
+    typeof candidate.id === 'number' &&
+    'name' in candidate &&
+    typeof candidate.name === 'string' &&
+    'start_date' in candidate &&
+    typeof candidate.start_date === 'string' &&
+    'url' in candidate &&
+    typeof candidate.url === 'string' &&
+    'location' in candidate &&
+    typeof candidate.location === 'object' &&
+    candidate.location !== null
   );
 }
 
-function toCollectedEvent(e: SymplaEvent): CollectedEvent {
-  const { location } = e;
+function toCollectedEvent(event: SymplaEvent): CollectedEvent {
+  const { location, images, organizer } = event;
   return {
     source: 'sympla',
-    sourceId: String(e.id),
-    name: e.name.trim(),
-    startsAt: e.start_date,
-    endsAt: e.end_date ?? null,
+    sourceId: String(event.id),
+    name: event.name.trim(),
+    startsAt: event.start_date,
+    endsAt: event.end_date ?? null,
     city: location.city?.trim() ?? '',
     state: location.state?.trim() ?? '',
     venue: location.name?.trim() || null,
     address: cleanAddress(location.address, location.neighborhood),
     latitude: location.lat ?? null,
     longitude: location.lon ?? null,
-    imageUrl: e.images?.original ?? e.images?.lg ?? null,
-    url: e.url,
-    organizer: e.organizer?.name?.trim() || null,
+    imageUrl: images?.original ?? images?.lg ?? null,
+    url: event.url,
+    organizer: organizer?.name?.trim() || null,
   };
 }
 
