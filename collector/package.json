@@ -1,0 +1,20 @@
+{
+  "name": "party-radar-collector",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Collects upcoming parties from public ticket platform pages",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "collect": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}

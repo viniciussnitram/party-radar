@@ -47,7 +47,7 @@ npm test
 
 ## Roadmap
 
-- [ ] Sympla city page collector
+- [x] Sympla city page collector
 - [ ] Party filter (drop courses, theater, talks) and open bar / category detection
 - [ ] Supabase schema, persistence and duplicate merging
 - [ ] Uticket collector
