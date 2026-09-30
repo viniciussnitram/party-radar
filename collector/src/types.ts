@@ -1,11 +1,11 @@
-export interface City {
+export type City = {
   name: string;
   /** Two-letter Brazilian state code, e.g. "RJ". */
   state: string;
-}
+};
 
 /** An event as found on a source, before filtering and duplicate merging. */
-export interface CollectedEvent {
+export type CollectedEvent = {
   source: 'sympla';
   sourceId: string;
   name: string;
@@ -21,4 +21,4 @@ export interface CollectedEvent {
   imageUrl: string | null;
   url: string;
   organizer: string | null;
-}
+};

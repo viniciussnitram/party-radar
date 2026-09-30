@@ -1,66 +1,68 @@
-import { decodeNextFlightData, extractObjectsWithKey } from '../lib/embedded-json.ts';
+import { findObjects } from '../lib/json.ts';
+import { parseNextFlightData } from '../lib/next-flight.ts';
 import { normalize, slugify } from '../lib/text.ts';
 import type { City, CollectedEvent } from '../types.ts';
 
 const BASE_URL = 'https://www.sympla.com.br/eventos';
 
-/** Shape of an event inside Sympla's city page payload (only the fields we use). */
-interface SymplaEvent {
+// Shapes of an event inside Sympla's city page payload (only the fields we use).
+
+type SymplaImages = {
+  original?: string;
+  lg?: string;
+};
+
+type SymplaOrganizer = {
+  name?: string;
+};
+
+type SymplaLocation = {
+  name?: string;
+  address?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  lat?: number;
+  lon?: number;
+};
+
+type SymplaEvent = {
   id: number;
   name: string;
   start_date: string;
   end_date?: string;
   url: string;
-  images?: { original?: string; lg?: string };
-  organizer?: { name?: string };
-  location: {
-    name?: string;
-    address?: string;
-    neighborhood?: string;
-    city?: string;
-    state?: string;
-    lat?: number;
-    lon?: number;
-  };
-}
+  images?: SymplaImages;
+  organizer?: SymplaOrganizer;
+  location: SymplaLocation;
+};
 
-export type CityPageResult =
-  | { city: City; status: 'ok'; events: CollectedEvent[] }
-  | { city: City; status: 'skipped'; reason: string };
+export type FetchPageResult = { ok: true; html: string } | { ok: false; reason: string };
 
 export function cityPageUrl(city: City): string {
   return `${BASE_URL}/${slugify(city.name, city.state)}`;
 }
 
 /**
- * Fetches one city page. A rate-limited or failed request is reported as
- * skipped instead of thrown, so one blocked city doesn't stop the whole run.
+ * Fetches one city page. A rate-limited or failed request is reported as a
+ * failed result instead of thrown, so one blocked city doesn't stop the run.
  */
-export async function fetchCityPage(
-  city: City,
-  userAgent: string,
-): Promise<{ ok: true; html: string } | { ok: false; reason: string }> {
+export async function fetchCityPage(city: City, userAgent: string): Promise<FetchPageResult> {
   const url = cityPageUrl(city);
-  try {
-    const response = await fetch(url, { headers: { 'user-agent': userAgent } });
-    if (!response.ok) return { ok: false, reason: `HTTP ${response.status} for ${url}` };
-    return { ok: true, html: await response.text() };
-  } catch (error) {
-    return { ok: false, reason: `${(error as Error).message} for ${url}` };
-  }
+  const response = await fetch(url, { headers: { 'user-agent': userAgent } }).catch(
+    (error: Error) => error,
+  );
+
+  if (response instanceof Error) return { ok: false, reason: `${response.message} for ${url}` };
+  if (!response.ok) return { ok: false, reason: `HTTP ${response.status} for ${url}` };
+  return { ok: true, html: await response.text() };
 }
 
 /** Extracts every event embedded in a Sympla city page, whatever its city. */
 export function parseCityPage(html: string): CollectedEvent[] {
-  const payload = decodeNextFlightData(html);
-  const events = new Map<string, CollectedEvent>();
-
-  for (const candidate of extractObjectsWithKey(payload, 'start_date')) {
-    if (!isSymplaEvent(candidate)) continue;
-    const event = toCollectedEvent(candidate);
-    events.set(event.sourceId, event);
-  }
-  return [...events.values()];
+  const events = findObjects(parseNextFlightData(html), isSymplaEvent).map(toCollectedEvent);
+  // The page repeats events across sections; keep one per id.
+  return [...new Map(events.map((event) => [event.sourceId, event])).values()];
 }
 
 /** Keeps only events that take place in one of the given cities. */
@@ -69,11 +71,9 @@ export function inCities(events: CollectedEvent[], cities: City[]): CollectedEve
   return events.filter((e) => wanted.has(`${normalize(e.city)}|${normalize(e.state)}`));
 }
 
-function isSymplaEvent(value: unknown): value is SymplaEvent {
-  const v = value as Partial<SymplaEvent> | null;
+function isSymplaEvent(value: object): value is SymplaEvent {
+  const v = value as Partial<SymplaEvent>;
   return (
-    typeof v === 'object' &&
-    v !== null &&
     typeof v.id === 'number' &&
     typeof v.name === 'string' &&
     typeof v.start_date === 'string' &&

@@ -28,9 +28,17 @@ const elsewhere = {
   location: { ...party.location, city: 'Petrópolis' },
 };
 
-/** Builds a page shaped like Sympla's: data split across Next.js flight chunks. */
+/**
+ * Builds a page shaped like Sympla's: module, text and JSON rows, split
+ * across Next.js flight chunks at an arbitrary point.
+ */
 function page(...events: object[]): string {
-  const payload = `0:["$","div",null,{"data":${JSON.stringify(events)}}]`;
+  const payload = [
+    '1:I[4707,["7063","static/chunks/7063.js"],"default"]',
+    '2:T1a,<p>some rich text</p>',
+    `3:["$","div",null,{"data":${JSON.stringify(events)}}]`,
+    '',
+  ].join('\n');
   const half = Math.floor(payload.length / 2);
   return [payload.slice(0, half), payload.slice(half)]
     .map((chunk) => `<script>self.__next_f.push([1,${JSON.stringify(chunk)}])</script>`)
