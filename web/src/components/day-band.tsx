@@ -2,15 +2,15 @@ import { cn } from '@/lib/utils'
 
 const BAND_COLORS = ['bg-band-pink', 'bg-band-yellow', 'bg-band-cyan', 'bg-band-orange'] as const
 
-type DayBandProps = {
-  label: string
-  count: number
+type Props = {
+  label: string,
+  count: number,
   /** Position of the day in the list; picks the wristband color. */
-  index: number
+  index: number,
 }
 
 /** A day header drawn as a party wristband, one color per day. */
-export function DayBand({ label, count, index }: DayBandProps) {
+export function DayBand({ label, count, index }: Props) {
   return (
     <div
       className={cn(

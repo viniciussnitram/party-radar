@@ -1,32 +1,33 @@
 import { MapPin, MessageCircle, Ticket } from 'lucide-react'
+import { Flyer } from '@/components/flyer'
+import { Show } from '@/components/show'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { displayName, formatPrice, formatTime, placeOf, thumbnailUrl, whatsAppShareUrl } from '@/lib/parties'
-import type { Party } from '@/types'
+import { displayName, formatPrice, formatTime, placeOf, whatsAppShareUrl } from '@/lib/parties'
+import type { OpenBar, Party } from '@/types'
 
-type PartyRowProps = {
-  party: Party
+type Props = {
+  party: Party,
 }
 
-const OPEN_BAR_LABELS: Record<NonNullable<Party['openBar']>, string> = {
+const OPEN_BAR_LABELS: Record<OpenBar, string> = {
   full: 'Open bar',
   partial: 'Open bar parcial',
 }
 
-export function PartyRow({ party }: PartyRowProps) {
+export function PartyRow({ party }: Props) {
   const name = displayName(party.name)
   const { venue, address } = placeOf(party)
-  const endsAt = party.endsAt ? ` até ${formatTime(party.endsAt)}` : ''
 
   return (
     <article className="grid grid-cols-[5.5rem_1fr] gap-x-4 gap-y-4 py-5 sm:grid-cols-[7.5rem_1fr] sm:gap-x-5">
-      <Flyer party={party} name={name} />
+      <Flyer imageUrl={party.imageUrl} name={name} />
 
       <div className="flex min-w-0 flex-col gap-2">
         <div>
           <p className="text-sm font-semibold text-lagoon">
             {formatTime(party.startsAt)}
-            {endsAt}
+            <Show when={party.endsAt !== null}> até {formatTime(party.endsAt ?? party.startsAt)}</Show>
           </p>
           <h3 className="text-lg leading-snug font-bold text-balance sm:text-xl">{name}</h3>
         </div>
@@ -35,22 +36,30 @@ export function PartyRow({ party }: PartyRowProps) {
           <MapPin aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
           <p>
             <span className="font-semibold">{venue ?? party.city}</span>
-            {venue ? <span className="text-muted-foreground">, {party.city}</span> : null}
-            {address ? <span className="block text-muted-foreground">{address}</span> : null}
+            <Show when={venue !== null}>
+              <span className="text-muted-foreground">, {party.city}</span>
+            </Show>
+            <Show when={address !== null}>
+              <span className="block text-muted-foreground">{address}</span>
+            </Show>
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="mr-1 text-base font-bold">
-            {party.priceFrom === null ? 'Preço no site' : `A partir de ${formatPrice(party.priceFrom)}`}
+            <Show when={party.priceFrom !== null} fallback="Preço no site">
+              A partir de {formatPrice(party.priceFrom ?? 0)}
+            </Show>
           </span>
-          {party.openBar ? (
-            <Badge className="bg-band-pink text-ink">{OPEN_BAR_LABELS[party.openBar]}</Badge>
-          ) : null}
-          {party.audience === 'university' ? (
+          <Show when={party.openBar !== null}>
+            <Badge className="bg-band-pink text-ink">{OPEN_BAR_LABELS[party.openBar ?? 'full']}</Badge>
+          </Show>
+          <Show when={party.audience === 'university'}>
             <Badge className="bg-band-yellow text-ink">Universitária</Badge>
-          ) : null}
-          {party.kind === 'show' ? <Badge variant="outline">Show</Badge> : null}
+          </Show>
+          <Show when={party.kind === 'show'}>
+            <Badge variant="outline">Show</Badge>
+          </Show>
         </div>
       </div>
 
@@ -60,7 +69,9 @@ export function PartyRow({ party }: PartyRowProps) {
           className="flex-1 sm:flex-none"
         >
           <Ticket aria-hidden data-icon="inline-start" />
-          {party.source === 'manual' ? 'Ver no Instagram' : 'Ver ingressos'}
+          <Show when={party.source === 'manual'} fallback="Ver ingressos">
+            Ver no Instagram
+          </Show>
         </Button>
         <Button
           render={<a href={whatsAppShareUrl(party)} target="_blank" rel="noreferrer" />}
@@ -72,32 +83,5 @@ export function PartyRow({ party }: PartyRowProps) {
         </Button>
       </div>
     </article>
-  )
-}
-
-type FlyerProps = {
-  party: Party
-  name: string
-}
-
-function Flyer({ party, name }: FlyerProps) {
-  if (!party.imageUrl) {
-    return (
-      <div
-        aria-hidden
-        className="flex aspect-square items-center justify-center rounded-md bg-ink text-4xl font-extrabold text-band-yellow [font-stretch:75%]"
-      >
-        {name.charAt(0)}
-      </div>
-    )
-  }
-
-  return (
-    <img
-      src={thumbnailUrl(party.imageUrl)}
-      alt=""
-      loading="lazy"
-      className="aspect-square w-full rounded-md bg-muted object-cover"
-    />
   )
 }

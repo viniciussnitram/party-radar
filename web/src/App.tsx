@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { DayBand } from '@/components/day-band'
 import { Filters } from '@/components/filters'
 import { PartyRow } from '@/components/party-row'
+import { Show } from '@/components/show'
 import { Button } from '@/components/ui/button'
 import partiesData from '@/data/parties.json'
 import { EMPTY_FILTERS, applyFilters, cities, groupByDay, type PartyFilters } from '@/lib/parties'
@@ -31,26 +32,27 @@ export default function App() {
       <Filters cities={cityOptions} filters={filters} onChange={setFilters} />
 
       <main className="mt-8 flex flex-col gap-10">
-        {days.length === 0 ? (
+        <Show when={days.length === 0}>
           <div className="flex flex-col items-start gap-3 py-10">
             <p className="text-lg font-semibold">Nenhum rolê com esses filtros.</p>
             <Button variant="outline" onClick={() => setFilters(EMPTY_FILTERS)}>
               Limpar filtros
             </Button>
           </div>
-        ) : (
-          days.map((day, index) => (
-            <section key={day.key} aria-label={day.label}>
-              <DayBand label={day.label} count={day.parties.length} index={index} />
-              {day.parties.map((party, partyIndex) => (
-                <div key={party.id}>
-                  {partyIndex > 0 ? <div aria-hidden className="perforation" /> : null}
-                  <PartyRow party={party} />
-                </div>
-              ))}
-            </section>
-          ))
-        )}
+        </Show>
+        {days.map((day, index) => (
+          <section key={day.key} aria-label={day.label}>
+            <DayBand label={day.label} count={day.parties.length} index={index} />
+            {day.parties.map((party, partyIndex) => (
+              <div key={party.id}>
+                <Show when={partyIndex > 0}>
+                  <div aria-hidden className="perforation" />
+                </Show>
+                <PartyRow party={party} />
+              </div>
+            ))}
+          </section>
+        ))}
       </main>
 
       <footer className="mt-16 border-t pt-6 text-sm text-muted-foreground">

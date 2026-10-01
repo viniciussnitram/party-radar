@@ -1,15 +1,17 @@
-import type { ReactNode } from 'react'
-import { cn } from '@/lib/utils'
+import { Chip } from '@/components/chip'
+import { ChipGroup } from '@/components/chip-group'
 import type { PartyFilters } from '@/lib/parties'
 
-type FiltersProps = {
-  cities: string[]
-  filters: PartyFilters
-  onChange: (filters: PartyFilters) => void
+type Props = {
+  cities: string[],
+  filters: PartyFilters,
+  onChange: (filters: PartyFilters) => void,
 }
 
-export function Filters({ cities, filters, onChange }: FiltersProps) {
+export function Filters({ cities, filters, onChange }: Props) {
   const update = (changes: Partial<PartyFilters>) => onChange({ ...filters, ...changes })
+  const toggleKind = (kind: NonNullable<PartyFilters['kind']>) =>
+    update({ kind: filters.kind === kind ? null : kind })
 
   return (
     <div className="flex flex-col gap-3">
@@ -25,10 +27,10 @@ export function Filters({ cities, filters, onChange }: FiltersProps) {
       </ChipGroup>
 
       <ChipGroup label="Tipo">
-        <Chip pressed={filters.kind === 'party'} onClick={() => update({ kind: filters.kind === 'party' ? null : 'party' })}>
+        <Chip pressed={filters.kind === 'party'} onClick={() => toggleKind('party')}>
           Só festas
         </Chip>
-        <Chip pressed={filters.kind === 'show'} onClick={() => update({ kind: filters.kind === 'show' ? null : 'show' })}>
+        <Chip pressed={filters.kind === 'show'} onClick={() => toggleKind('show')}>
           Só shows
         </Chip>
         <Chip pressed={filters.onlyOpenBar} onClick={() => update({ onlyOpenBar: !filters.onlyOpenBar })}>
@@ -39,40 +41,5 @@ export function Filters({ cities, filters, onChange }: FiltersProps) {
         </Chip>
       </ChipGroup>
     </div>
-  )
-}
-
-type ChipGroupProps = {
-  label: string
-  children: ReactNode
-}
-
-function ChipGroup({ label, children }: ChipGroupProps) {
-  return (
-    <div role="group" aria-label={label} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
-      {children}
-    </div>
-  )
-}
-
-type ChipProps = {
-  pressed: boolean
-  onClick: () => void
-  children: ReactNode
-}
-
-function Chip({ pressed, onClick, children }: ChipProps) {
-  return (
-    <button
-      type="button"
-      aria-pressed={pressed}
-      onClick={onClick}
-      className={cn(
-        'shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-semibold whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-        pressed ? 'border-ink bg-ink text-white' : 'border-border bg-white text-ink hover:border-ink',
-      )}
-    >
-      {children}
-    </button>
   )
 }

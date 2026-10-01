@@ -3,17 +3,17 @@ import type { Party } from '@/types'
 const TIME_ZONE = 'America/Sao_Paulo'
 
 export type PartyFilters = {
-  city: string | null
-  onlyOpenBar: boolean
-  onlyUniversity: boolean
-  kind: Party['kind'] | null
+  city: string | null,
+  onlyOpenBar: boolean,
+  onlyUniversity: boolean,
+  kind: Party['kind'] | null,
 }
 
 export type PartyDay = {
   /** Local date as YYYY-MM-DD, used as a stable key. */
-  key: string
-  label: string
-  parties: Party[]
+  key: string,
+  label: string,
+  parties: Party[],
 }
 
 export const EMPTY_FILTERS: PartyFilters = {
@@ -66,6 +66,7 @@ export function displayName(name: string): string {
 
 /** Sympla serves smaller renditions with an "-xs" suffix (~40 KB instead of ~220 KB). */
 export function thumbnailUrl(imageUrl: string): string {
+  if (!URL.canParse(imageUrl)) return imageUrl
   const url = new URL(imageUrl)
   if (url.hostname !== 'images.sympla.com.br') return imageUrl
   url.pathname = url.pathname.replace(/(?<!-xs|-lg)(\.\w+)$/, '-xs$1')
@@ -73,9 +74,9 @@ export function thumbnailUrl(imageUrl: string): string {
 }
 
 export type Place = {
-  venue: string | null
+  venue: string | null,
   /** Street and neighborhood, without parts that repeat the venue or the city. */
-  address: string | null
+  address: string | null,
 }
 
 /**
