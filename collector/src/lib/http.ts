@@ -1,14 +1,14 @@
 export type FetchHtmlSuccess = {
-  ok: true;
-  url: string;
-  html: string;
+  ok: true,
+  url: string,
+  html: string,
 };
 
 export type FetchHtmlFailure = {
-  ok: false;
-  url: string;
+  ok: false,
+  url: string,
   /** Why the page couldn't be fetched, e.g. "HTTP 429". */
-  reason: string;
+  reason: string,
 };
 
 export type FetchHtmlResult = FetchHtmlSuccess | FetchHtmlFailure;

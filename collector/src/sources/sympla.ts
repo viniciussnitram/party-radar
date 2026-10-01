@@ -10,59 +10,59 @@ const NEXT_DATA_SCRIPT = /<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/s;
 // Shapes of an event inside Sympla's city page payload (only the fields we use).
 
 type SymplaImages = {
-  original?: string;
-  lg?: string;
+  original?: string,
+  lg?: string,
 };
 
 type SymplaOrganizer = {
-  name?: string;
+  name?: string,
 };
 
 type SymplaLocation = {
-  name?: string;
-  address?: string;
-  neighborhood?: string;
-  city?: string;
-  state?: string;
-  lat?: number;
-  lon?: number;
+  name?: string,
+  address?: string,
+  neighborhood?: string,
+  city?: string,
+  state?: string,
+  lat?: number,
+  lon?: number,
 };
 
 type SymplaEvent = {
-  id: number;
-  name: string;
-  start_date: string;
-  end_date?: string;
-  url: string;
-  images?: SymplaImages;
-  organizer?: SymplaOrganizer;
-  location: SymplaLocation;
+  id: number,
+  name: string,
+  start_date: string,
+  end_date?: string,
+  url: string,
+  images?: SymplaImages,
+  organizer?: SymplaOrganizer,
+  location: SymplaLocation,
 };
 
 // Shape of the event inside an event page's __NEXT_DATA__ (only the fields we use).
 
 type SymplaEventCategory = {
   /** e.g. "musica", "festas-e-shows". */
-  slug?: string;
+  slug?: string,
 };
 
 type SymplaEventPage = {
-  eventsCategory?: SymplaEventCategory | null;
+  eventsCategory?: SymplaEventCategory | null,
   /** Description as plain text. */
-  strippedDetail?: string | null;
+  strippedDetail?: string | null,
 };
 
 export type CityPageSuccess = {
-  ok: true;
-  city: City;
-  html: string;
+  ok: true,
+  city: City,
+  html: string,
 };
 
 export type CityPageFailure = {
-  ok: false;
-  city: City;
+  ok: false,
+  city: City,
   /** Why the page couldn't be fetched, e.g. "HTTP 429 for <url>". */
-  reason: string;
+  reason: string,
 };
 
 export type CityPageResult = CityPageSuccess | CityPageFailure;
