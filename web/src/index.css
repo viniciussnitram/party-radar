@@ -1,0 +1,106 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/bricolage-grotesque/wdth.css";
+
+@theme inline {
+  --font-sans: 'Bricolage Grotesque Variable', system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+
+  /* Wristband colors: the Tyvek bands handed out at the door. */
+  --color-band-pink: var(--band-pink);
+  --color-band-yellow: var(--band-yellow);
+  --color-band-cyan: var(--band-cyan);
+  --color-band-orange: var(--band-orange);
+  --color-lagoon: var(--lagoon);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+}
+
+:root {
+  --paper: #f2f5f7;
+  --ink: #18264a;
+  --lagoon: #0b7a83;
+  --band-pink: #ff3d8b;
+  --band-yellow: #ffd60a;
+  --band-cyan: #2ec4d6;
+  --band-orange: #ff7a1a;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: #ffffff;
+  --card-foreground: var(--ink);
+  --popover: #ffffff;
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: #ffffff;
+  --secondary: #e3e9ee;
+  --secondary-foreground: var(--ink);
+  --muted: #e3e9ee;
+  --muted-foreground: #4f5d78;
+  --accent: #e3e9ee;
+  --accent-foreground: var(--ink);
+  --destructive: #c2263b;
+  --border: #cfd8e0;
+  --input: #cfd8e0;
+  --ring: var(--lagoon);
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+/* The notched tail of a wristband strip. */
+.band-edge {
+  clip-path: polygon(0 0, 100% 0, calc(100% - 0.9rem) 50%, 100% 100%, 0 100%);
+}
+
+/* Ticket-stub perforation between parties. */
+.perforation {
+  background-image: radial-gradient(circle, var(--border) 1.5px, transparent 1.6px);
+  background-size: 9px 4px;
+  background-repeat: repeat-x;
+  height: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

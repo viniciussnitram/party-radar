@@ -4,6 +4,8 @@ Party Radar collects upcoming parties in the Região dos Lagos and Norte Flumine
 
 Local parties are announced across dozens of Instagram pages and ticket platforms. Party Radar gathers them automatically from public ticket platform pages, so nobody has to keep track by hand.
 
+**Live MVP:** https://viniciussnitram.github.io/party-radar/. For now it lists a curated snapshot of upcoming parties (`web/src/data/parties.json`), while the automated pipeline is built.
+
 ## How it works
 
 ```
@@ -33,7 +35,7 @@ Supabase (Postgres + Storage) ◄── web (React, Vercel)
 | Path | Description |
 |---|---|
 | `collector/` | Event collector (TypeScript, Node.js 22) |
-| `web/` | Frontend (planned) |
+| `web/` | Frontend (React, Vite, Tailwind CSS, shadcn/ui), deployed to GitHub Pages |
 | `supabase/` | Database migrations (planned) |
 
 ## Getting started
@@ -45,6 +47,14 @@ npm run collect   # prints the parties found for each city
 npm test
 ```
 
+```bash
+cd web
+npm install
+npm run dev       # http://localhost:5173/party-radar/
+```
+
+Every push to `main` that touches `web/` deploys the site through `.github/workflows/deploy-web.yml`.
+
 ## Roadmap
 
 - [x] Sympla city page collector
@@ -52,5 +62,6 @@ npm test
 - [ ] Supabase schema, persistence and duplicate merging
 - [ ] Uticket collector
 - [ ] Scheduled runs on GitHub Actions
-- [ ] Web app: public list and admin area
+- [x] Web MVP: curated party list on GitHub Pages
+- [ ] Web app: live data from Supabase and admin area
 - [ ] Instagram Graph API source for parties that are not on ticket platforms
