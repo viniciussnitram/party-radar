@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { cityPageUrl, inCities, parseCityPage } from '../src/sources/sympla.ts';
+import { cityPageUrl, hasEventPage, inCities, parseCityPage, parseEventPage } from '../src/sources/sympla.ts';
 
 const party = {
   end_date: '2026-10-03T05:00:00+00:00',
@@ -79,6 +79,38 @@ describe('sympla', () => {
 
   it('returns nothing for a page without events', () => {
     assert.deepEqual(parseCityPage('<html><body>Just a moment...</body></html>'), []);
+  });
+
+  it('reads category and plain-text description from an event page', () => {
+    const nextData = {
+      props: {
+        pageProps: {
+          hydrationData: {
+            eventHydration: {
+              event: {
+                name: 'Réveillon',
+                eventsCategory: { id: 27, slug: 'musica' },
+                strippedDetail: 'Open Bar &amp; Open Food&nbsp;&nbsp;+ Espaço Kids',
+              },
+            },
+          },
+        },
+      },
+    };
+    const html = `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify(nextData)}</script>`;
+    assert.deepEqual(parseEventPage(html), {
+      category: 'musica',
+      description: 'Open Bar & Open Food + Espaço Kids',
+    });
+  });
+
+  it('returns no details for an event page without data', () => {
+    assert.equal(parseEventPage('<html><body></body></html>'), null);
+  });
+
+  it('only fetches pages hosted on www.sympla.com.br', () => {
+    assert.equal(hasEventPage({ ...parseCityPage(page(party))[0]!, url: 'https://bileto.sympla.com.br/event/1' }), false);
+    assert.equal(hasEventPage(parseCityPage(page(party))[0]!), true);
   });
 
   it('keeps only events in tracked cities, ignoring accents and case', () => {
